@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 
 namespace IPTracker
 {
@@ -8,6 +10,9 @@ namespace IPTracker
         private const string BaseAddress = "192.168.0.";
         private const int PingTimeout = 1000;
         private const int MaxConcurrency = 50;
+
+        [DllImport("iphlpapi.dll", ExactSpelling = true)]
+        private static extern int SendARP(uint destIp, uint srcIp, byte[] macAddr, ref int macAddrLen);
 
         public static async Task ScanAsync(CancellationToken cancellationToken = default)
         {
@@ -21,13 +26,13 @@ namespace IPTracker
                     var ip = BaseAddress + i;
                     using var ping = new Ping();
                     var reply = await ping.SendPingAsync(
-                        System.Net.IPAddress.Parse(ip),
+                        IPAddress.Parse(ip),
                         TimeSpan.FromMilliseconds(PingTimeout),
                         cancellationToken: cancellationToken);
                     if (reply.Status == IPStatus.Success)
                     {
                         var mac = GetMacAddress(ip);
-                        Console.WriteLine($"{ip}  {mac}");
+                        Debug.WriteLine($"{ip}  {mac}");
                     }
                 }
                 catch (OperationCanceledException) { throw; }
@@ -43,31 +48,14 @@ namespace IPTracker
 
         private static string GetMacAddress(string ip)
         {
-            try
-            {
-                var psi = new ProcessStartInfo("arp", $"-a {ip}")
-                {
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                };
-                using var proc = Process.Start(psi)!;
-                var output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit();
+            var macAddr = new byte[6];
+            var macAddrLen = macAddr.Length;
+            var destIp = BitConverter.ToUInt32(IPAddress.Parse(ip).GetAddressBytes(), 0);
 
-                foreach (var line in output.Split('\n'))
-                {
-                    var trimmed = line.Trim();
-                    if (trimmed.StartsWith(ip))
-                    {
-                        var parts = trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length >= 2)
-                            return parts[1];
-                    }
-                }
-            }
-            catch { }
-            return "unknown";
+            if (SendARP(destIp, 0, macAddr, ref macAddrLen) != 0)
+                return "unknown";
+
+            return string.Join(":", macAddr.Take(macAddrLen).Select(b => b.ToString("X2")));
         }
     }
 }

@@ -31,7 +31,6 @@
 			components = new System.ComponentModel.Container();
 			dgvDevices = new DataGridView();
 			menuStrip = new MenuStrip();
-			toolsMenuItem = new ToolStripMenuItem("Tools");
 			scanMenuItem = new ToolStripMenuItem("Scan");
 			((System.ComponentModel.ISupportInitialize)dgvDevices).BeginInit();
 			menuStrip.SuspendLayout();
@@ -48,8 +47,7 @@
 			dgvDevices.Name = "dgvDevices";
 			dgvDevices.TabIndex = 0;
 
-			toolsMenuItem.DropDownItems.Add(scanMenuItem);
-			menuStrip.Items.Add(toolsMenuItem);
+			menuStrip.Items.Add(scanMenuItem);
 
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(900, 500);
@@ -67,7 +65,6 @@
 
 		private DataGridView dgvDevices = null!;
 		private MenuStrip menuStrip = null!;
-		private ToolStripMenuItem toolsMenuItem = null!;
 		private ToolStripMenuItem scanMenuItem = null!;
 
 		#endregion
