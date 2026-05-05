@@ -8,6 +8,7 @@ namespace IPTracker
 		private string? _sortColumn;
 		private bool _sortAscending = true;
 		private readonly AppSettings _settings = AppSettings.Load();
+		private CancellationTokenSource? _scanCts;
 
 		public MainForm()
 		{
@@ -45,6 +46,7 @@ namespace IPTracker
 				ApplySort(_settings.SortColumn, _settings.SortAscending);
 
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
+			scanMenuItem.Click += OnScanClick;
 			FormClosing += OnFormClosing;
 			Load += OnLoad;
 		}
@@ -88,6 +90,24 @@ namespace IPTracker
 		{
 			var col = dgvDevices.Columns[e.ColumnIndex];
 			ApplySort(col.DataPropertyName, _sortColumn == col.DataPropertyName ? !_sortAscending : true);
+		}
+
+		private async void OnScanClick(object? sender, EventArgs e)
+		{
+			_scanCts?.Cancel();
+			_scanCts = new CancellationTokenSource();
+			scanMenuItem.Enabled = false;
+			scanMenuItem.Text = "Scanning…";
+			try
+			{
+				await LanScanner.ScanAsync(_scanCts.Token);
+			}
+			catch (OperationCanceledException) { }
+			finally
+			{
+				scanMenuItem.Text = "Scan";
+				scanMenuItem.Enabled = true;
+			}
 		}
 
 		private void OnFormClosing(object? sender, FormClosingEventArgs e)
