@@ -12,6 +12,7 @@ namespace IPTracker
         public string? SortColumn { get; set; }
         public bool SortAscending { get; set; } = true;
         public int SplitterDistance { get; set; } = 300;
+        public string? XmlFilePath { get; set; }
         public Dictionary<string, int> ColumnWidths { get; set; } = [];
 
         private static string DefaultPath => Path.Combine(
@@ -49,6 +50,8 @@ namespace IPTracker
                 if (splitter != null)
                     s.SplitterDistance = (int?)splitter.Attribute("Distance") ?? s.SplitterDistance;
 
+                s.XmlFilePath = (string?)root.Element("XmlFile")?.Attribute("Path");
+
                 foreach (var col in root.Element("Columns")?.Elements("Column") ?? [])
                 {
                     var name  = (string?)col.Attribute("Name");
@@ -83,6 +86,8 @@ namespace IPTracker
                         new XAttribute("Ascending", SortAscending)),
                     new XElement("Splitter",
                         new XAttribute("Distance", SplitterDistance)),
+                    new XElement("XmlFile",
+                        new XAttribute("Path", XmlFilePath ?? string.Empty)),
                     new XElement("Columns",
                         ColumnWidths.Select(kvp =>
                             new XElement("Column",

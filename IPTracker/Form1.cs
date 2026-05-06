@@ -19,6 +19,9 @@ namespace IPTracker
 			// Apply position/size before the handle is created so there's no flicker.
 			// WindowState is deferred to OnLoad — setting it in the constructor can
 			// prevent Location/Size from taking effect.
+			if (!string.IsNullOrEmpty(_settings.XmlFilePath))
+				XmlFilePath = _settings.XmlFilePath;
+
 			StartPosition = FormStartPosition.Manual;
 			Location      = new Point(_settings.WindowX, _settings.WindowY);
 			Size          = new Size(_settings.WindowWidth, _settings.WindowHeight);
@@ -253,6 +256,7 @@ namespace IPTracker
 				settings.ColumnWidths[col.DataPropertyName] = col.Width;
 
 			settings.SplitterDistance = splitContainer.SplitterDistance;
+			settings.XmlFilePath      = XmlFilePath;
 			settings.Save();
 		}
 	}
