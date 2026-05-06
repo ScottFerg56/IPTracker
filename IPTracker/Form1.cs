@@ -3,6 +3,7 @@ namespace IPTracker
 	public partial class MainForm : Form
 	{
 		private const string XmlFilePath = @"C:\Users\Scott\SynologyDrive\Documents\IPTracker.xml";
+		private static readonly string LogFilePath = Path.ChangeExtension(XmlFilePath, ".log");
 
 		private List<NetworkDevice> _devices = [];
 		private string? _sortColumn;
@@ -69,6 +70,11 @@ namespace IPTracker
 		{
 			rtbOutput.AppendText(message + Environment.NewLine);
 			rtbOutput.ScrollToCaret();
+			try
+			{
+				File.AppendAllText(LogFilePath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {message}{Environment.NewLine}");
+			}
+			catch { }
 		}
 
 		private static uint IpSortKey(string ip)
