@@ -2,7 +2,8 @@ namespace IPTracker
 {
 	public partial class MainForm : Form
 	{
-		private string XmlFilePath = @"C:\Users\Scott\SynologyDrive\Documents\IPTracker.xml";
+		private string XmlFilePath = Path.Combine(
+			Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml");
 		private string LogFilePath => Path.ChangeExtension(XmlFilePath, ".log");
 
 		private List<NetworkDevice> _devices = [];
