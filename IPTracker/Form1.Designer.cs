@@ -48,7 +48,6 @@ namespace IPTracker
 			dgvDevices.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 			dgvDevices.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgvDevices.Dock = DockStyle.Fill;
-			dgvDevices.ReadOnly = true;
 			dgvDevices.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 			dgvDevices.Name = "dgvDevices";
 			dgvDevices.TabIndex = 0;

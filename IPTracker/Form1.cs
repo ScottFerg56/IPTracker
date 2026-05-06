@@ -11,6 +11,7 @@ namespace IPTracker
 		private bool _sortAscending = true;
 		private readonly AppSettings _settings = AppSettings.Load();
 		private CancellationTokenSource? _scanCts;
+		private string? _editingOriginalComments;
 
 		public MainForm()
 		{
@@ -27,10 +28,10 @@ namespace IPTracker
 			Size          = new Size(_settings.WindowWidth, _settings.WindowHeight);
 
 			dgvDevices.Columns.AddRange(
-				new DataGridViewTextBoxColumn { HeaderText = "Name",         DataPropertyName = nameof(NetworkDevice.Name),         SortMode = DataGridViewColumnSortMode.Programmatic },
-				new DataGridViewTextBoxColumn { HeaderText = "IP Address",   DataPropertyName = nameof(NetworkDevice.IpAddress),    SortMode = DataGridViewColumnSortMode.Programmatic },
-				new DataGridViewTextBoxColumn { HeaderText = "Manufacturer", DataPropertyName = nameof(NetworkDevice.Manufacturer), SortMode = DataGridViewColumnSortMode.Programmatic },
-				new DataGridViewTextBoxColumn { HeaderText = "MAC Address",  DataPropertyName = nameof(NetworkDevice.MacAddress),   SortMode = DataGridViewColumnSortMode.Programmatic },
+				new DataGridViewTextBoxColumn { HeaderText = "Name",         DataPropertyName = nameof(NetworkDevice.Name),         SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn { HeaderText = "IP Address",   DataPropertyName = nameof(NetworkDevice.IpAddress),    SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn { HeaderText = "Manufacturer", DataPropertyName = nameof(NetworkDevice.Manufacturer), SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn { HeaderText = "MAC Address",  DataPropertyName = nameof(NetworkDevice.MacAddress),   SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
 				new DataGridViewTextBoxColumn { HeaderText = "Comments",     DataPropertyName = nameof(NetworkDevice.Comments),     SortMode = DataGridViewColumnSortMode.Programmatic }
 			);
 
@@ -51,6 +52,8 @@ namespace IPTracker
 				ApplySort(_settings.SortColumn, _settings.SortAscending);
 
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
+			dgvDevices.CellBeginEdit += OnCellBeginEdit;
+			dgvDevices.CellEndEdit   += OnCellEndEdit;
 			openMenuItem.Click += OnOpenClick;
 			scanMenuItem.Click += OnScanClick;
 			FormClosing += OnFormClosing;
@@ -126,6 +129,26 @@ namespace IPTracker
 		{
 			var col = dgvDevices.Columns[e.ColumnIndex];
 			ApplySort(col.DataPropertyName, _sortColumn == col.DataPropertyName ? !_sortAscending : true);
+		}
+
+		private void OnCellBeginEdit(object? sender, DataGridViewCellCancelEventArgs e)
+		{
+			if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+			if (dgvDevices.Columns[e.ColumnIndex].DataPropertyName != nameof(NetworkDevice.Comments)) return;
+			_editingOriginalComments = _devices[e.RowIndex].Comments;
+		}
+
+		private void OnCellEndEdit(object? sender, DataGridViewCellEventArgs e)
+		{
+			if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+			if (dgvDevices.Columns[e.ColumnIndex].DataPropertyName != nameof(NetworkDevice.Comments)) return;
+
+			var device = _devices[e.RowIndex];
+			if (string.Equals(device.Comments, _editingOriginalComments)) return;
+
+			Log($"{device.MacAddress}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
+			_editingOriginalComments = null;
+			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 		}
 
 		private void OnOpenClick(object? sender, EventArgs e)
