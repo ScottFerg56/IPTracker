@@ -2,8 +2,12 @@ namespace IPTracker
 {
 	public partial class MainForm : Form
 	{
-		private string XmlFilePath = Path.Combine(
-			Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml");
+		private string _xmlFilePath = string.Empty;
+		private string XmlFilePath
+		{
+			get => _xmlFilePath;
+			set { _xmlFilePath = value; Text = $"IP Tracker — {Path.GetFileName(value)}"; }
+		}
 		private string LogFilePath => Path.ChangeExtension(XmlFilePath, ".log");
 
 		private List<NetworkDevice> _devices = [];
@@ -21,8 +25,9 @@ namespace IPTracker
 			// Apply position/size before the handle is created so there's no flicker.
 			// WindowState is deferred to OnLoad — setting it in the constructor can
 			// prevent Location/Size from taking effect.
-			if (!string.IsNullOrEmpty(_settings.XmlFilePath))
-				XmlFilePath = _settings.XmlFilePath;
+			XmlFilePath = !string.IsNullOrEmpty(_settings.XmlFilePath)
+				? _settings.XmlFilePath
+				: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml");
 
 			StartPosition = FormStartPosition.Manual;
 			Location      = new Point(_settings.WindowX, _settings.WindowY);
@@ -55,6 +60,7 @@ namespace IPTracker
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
 			dgvDevices.CellBeginEdit += OnCellBeginEdit;
 			dgvDevices.CellEndEdit   += OnCellEndEdit;
+			newMenuItem.Click      += OnNewClick;
 			openMenuItem.Click     += OnOpenClick;
 			settingsMenuItem.Click += OnSettingsClick;
 			scanMenuItem.Click     += OnScanClick;
@@ -151,6 +157,23 @@ namespace IPTracker
 			Log($"{device.MacAddress}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
 			_editingOriginalComments = null;
 			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
+		}
+
+		private void OnNewClick(object? sender, EventArgs e)
+		{
+			using var dlg = new SaveFileDialog
+			{
+				Filter           = "XML Files|*.xml|All Files|*.*",
+				Title            = "Create New Devices File",
+				InitialDirectory = Path.GetDirectoryName(XmlFilePath),
+				FileName         = "IPTracker.xml",
+			};
+			if (dlg.ShowDialog() != DialogResult.OK) return;
+
+			XmlFilePath = dlg.FileName;
+			_devices    = [];
+			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
+			RefreshGrid();
 		}
 
 		private void OnSettingsClick(object? sender, EventArgs e)
