@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Channels;
 
 namespace IPTracker
 {
@@ -14,46 +16,60 @@ namespace IPTracker
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(uint destIp, uint srcIp, byte[] macAddr, ref int macAddrLen);
 
-        public static async Task ScanAsync(CancellationToken cancellationToken = default)
+        public static async IAsyncEnumerable<(string Ip, string? Mac)> ScanAsync(
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            var channel = Channel.CreateUnbounded<(string Ip, string? Mac)>();
             var semaphore = new SemaphoreSlim(MaxConcurrency);
 
-            var tasks = Enumerable.Range(1, 255).Select(async i =>
+            var producer = Task.Run(async () =>
             {
-                await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    var ip = BaseAddress + i;
-                    using var ping = new Ping();
-                    var reply = await ping.SendPingAsync(
-                        IPAddress.Parse(ip),
-                        TimeSpan.FromMilliseconds(PingTimeout),
-                        cancellationToken: cancellationToken);
-                    if (reply.Status == IPStatus.Success)
+                    var tasks = Enumerable.Range(1, 255).Select(async i =>
                     {
-                        var mac = GetMacAddress(ip);
-                        Debug.WriteLine($"{ip}  {mac}");
-                    }
+                        await semaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            var ip = BaseAddress + i;
+                            using var ping = new Ping();
+                            var reply = await ping.SendPingAsync(
+                                IPAddress.Parse(ip),
+                                TimeSpan.FromMilliseconds(PingTimeout),
+                                cancellationToken: cancellationToken);
+                            if (reply.Status == IPStatus.Success)
+                            {
+                                var mac = GetMacAddress(ip);
+                            //    Debug.WriteLine($"{ip}  {mac}");
+                                await channel.Writer.WriteAsync((ip, mac), cancellationToken);
+                            }
+                        }
+                        catch (OperationCanceledException) { throw; }
+                        catch { }
+                        finally { semaphore.Release(); }
+                    });
+                    await Task.WhenAll(tasks);
                 }
-                catch (OperationCanceledException) { throw; }
-                catch { }
                 finally
                 {
-                    semaphore.Release();
+                    channel.Writer.Complete();
                 }
-            });
+            }, cancellationToken);
 
-            await Task.WhenAll(tasks);
+            await foreach (var item in channel.Reader.ReadAllAsync(cancellationToken))
+                yield return item;
+
+            await producer;
         }
 
-        private static string GetMacAddress(string ip)
+        private static string? GetMacAddress(string ip)
         {
             var macAddr = new byte[6];
             var macAddrLen = macAddr.Length;
             var destIp = BitConverter.ToUInt32(IPAddress.Parse(ip).GetAddressBytes(), 0);
 
             if (SendARP(destIp, 0, macAddr, ref macAddrLen) != 0)
-                return "unknown";
+                return null;
 
             return string.Join(":", macAddr.Take(macAddrLen).Select(b => b.ToString("X2")));
         }

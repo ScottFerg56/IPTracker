@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace IPTracker
 {
 	public partial class MainForm : Form
@@ -64,16 +66,34 @@ namespace IPTracker
 			}
 		}
 
+		private static uint IpSortKey(string ip)
+		{
+			if (!System.Net.IPAddress.TryParse(ip, out var addr))
+				return 0;
+			var b = addr.GetAddressBytes();
+			return ((uint)b[0] << 24) | ((uint)b[1] << 16) | ((uint)b[2] << 8) | b[3];
+		}
+
 		private void ApplySort(string propName, bool ascending)
 		{
 			_sortColumn    = propName;
 			_sortAscending = ascending;
 
-			var prop = typeof(NetworkDevice).GetProperty(propName)!;
-			_devices = (_sortAscending
-				? _devices.OrderBy(d => prop.GetValue(d))
-				: _devices.OrderByDescending(d => prop.GetValue(d)))
-				.ToList();
+			IOrderedEnumerable<NetworkDevice> sorted;
+			if (propName == nameof(NetworkDevice.IpAddress))
+			{
+				sorted = ascending
+					? _devices.OrderBy(d => IpSortKey(d.IpAddress))
+					: _devices.OrderByDescending(d => IpSortKey(d.IpAddress));
+			}
+			else
+			{
+				var prop = typeof(NetworkDevice).GetProperty(propName)!;
+				sorted = ascending
+					? _devices.OrderBy(d => prop.GetValue(d))
+					: _devices.OrderByDescending(d => prop.GetValue(d));
+			}
+			_devices = sorted.ToList();
 
 			dgvDevices.DataSource = _devices;
 
@@ -100,13 +120,55 @@ namespace IPTracker
 			scanMenuItem.Text = "Scanning…";
 			try
 			{
-				await LanScanner.ScanAsync(_scanCts.Token);
+				await foreach (var (ip, mac) in LanScanner.ScanAsync(_scanCts.Token))
+					MergeDevice(ip, mac);
 			}
 			catch (OperationCanceledException) { }
 			finally
 			{
 				scanMenuItem.Text = "Scan";
 				scanMenuItem.Enabled = true;
+			}
+		}
+
+		private void MergeDevice(string ip, string? mac)
+		{
+			var byMac = mac != null
+				? _devices.FirstOrDefault(d => string.Equals(d.MacAddress, mac, StringComparison.OrdinalIgnoreCase))
+				: null;
+			var byIp = _devices.FirstOrDefault(d => string.Equals(d.IpAddress, ip, StringComparison.OrdinalIgnoreCase));
+
+			if (mac != null)
+			{
+				if (byMac == null)
+				{
+					_devices.Add(new NetworkDevice { IpAddress = ip, MacAddress = mac });
+					Debug.WriteLine($"Added: {ip}  {mac}");
+				}
+				else if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
+				{
+					Debug.WriteLine($"Updated IP for {mac}: {byMac.IpAddress} -> {ip}");
+					byMac.IpAddress = ip;
+				}
+			}
+
+			if (byIp != null && byIp != byMac)
+			{
+				Debug.WriteLine($"Cleared IP {ip} from {byIp.MacAddress}");
+				byIp.IpAddress = string.Empty;
+			}
+
+			RefreshGrid();
+		}
+
+		private void RefreshGrid()
+		{
+			if (!string.IsNullOrEmpty(_sortColumn))
+				ApplySort(_sortColumn, _sortAscending);
+			else
+			{
+				dgvDevices.DataSource = null;
+				dgvDevices.DataSource = _devices;
 			}
 		}
 
