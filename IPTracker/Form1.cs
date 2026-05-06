@@ -2,8 +2,8 @@ namespace IPTracker
 {
 	public partial class MainForm : Form
 	{
-		private const string XmlFilePath = @"C:\Users\Scott\SynologyDrive\Documents\IPTracker.xml";
-		private static readonly string LogFilePath = Path.ChangeExtension(XmlFilePath, ".log");
+		private string XmlFilePath = @"C:\Users\Scott\SynologyDrive\Documents\IPTracker.xml";
+		private string LogFilePath => Path.ChangeExtension(XmlFilePath, ".log");
 
 		private List<NetworkDevice> _devices = [];
 		private ScanRange _scanRange = new();
@@ -48,6 +48,7 @@ namespace IPTracker
 				ApplySort(_settings.SortColumn, _settings.SortAscending);
 
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
+			openMenuItem.Click += OnOpenClick;
 			scanMenuItem.Click += OnScanClick;
 			FormClosing += OnFormClosing;
 			Load += OnLoad;
@@ -122,6 +123,22 @@ namespace IPTracker
 		{
 			var col = dgvDevices.Columns[e.ColumnIndex];
 			ApplySort(col.DataPropertyName, _sortColumn == col.DataPropertyName ? !_sortAscending : true);
+		}
+
+		private void OnOpenClick(object? sender, EventArgs e)
+		{
+			using var dlg = new OpenFileDialog
+			{
+				Filter           = "XML Files|*.xml|All Files|*.*",
+				Title            = "Open Devices File",
+				InitialDirectory = Path.GetDirectoryName(XmlFilePath),
+				FileName         = Path.GetFileName(XmlFilePath),
+			};
+			if (dlg.ShowDialog() != DialogResult.OK) return;
+
+			XmlFilePath = dlg.FileName;
+			(_devices, _scanRange) = NetworkDevice.LoadFromXml(XmlFilePath);
+			RefreshGrid();
 		}
 
 		private async void OnScanClick(object? sender, EventArgs e)

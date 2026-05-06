@@ -33,6 +33,7 @@ namespace IPTracker
 			splitContainer = new SplitContainer();
 			rtbOutput     = new RichTextBox();
 			menuStrip     = new MenuStrip();
+			openMenuItem  = new ToolStripMenuItem("Open");
 			scanMenuItem  = new ToolStripMenuItem("Scan");
 			((System.ComponentModel.ISupportInitialize)dgvDevices).BeginInit();
 			((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
@@ -69,6 +70,7 @@ namespace IPTracker
 			splitContainer.Panel1.Controls.Add(dgvDevices);
 			splitContainer.Panel2.Controls.Add(rtbOutput);
 
+			menuStrip.Items.Add(openMenuItem);
 			menuStrip.Items.Add(scanMenuItem);
 
 			AutoScaleMode = AutoScaleMode.Font;
@@ -92,6 +94,7 @@ namespace IPTracker
 		private SplitContainer splitContainer = null!;
 		private RichTextBox rtbOutput = null!;
 		private MenuStrip menuStrip = null!;
+		private ToolStripMenuItem openMenuItem = null!;
 		private ToolStripMenuItem scanMenuItem = null!;
 
 		#endregion

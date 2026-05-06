@@ -4,6 +4,7 @@ A Windows desktop app for viewing network devices from an XML data file in a sor
 
 ## Features
 
+- Open any XML devices file via the **Open** menu item
 - Displays network devices with Name, IP Address, Manufacturer, MAC Address, and Comments
 - Click any column header to sort ascending/descending
 - Persists window position, size, sort state, and column widths between sessions
