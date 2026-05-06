@@ -8,7 +8,6 @@ namespace IPTracker
 {
     internal static class LanScanner
     {
-        private const string BaseAddress = "192.168.0.";
         private const int PingTimeout = 1000;
         private const int MaxConcurrency = 50;
 
@@ -16,6 +15,7 @@ namespace IPTracker
         private static extern int SendARP(uint destIp, uint srcIp, byte[] macAddr, ref int macAddrLen);
 
         public static async IAsyncEnumerable<(string Ip, string? Mac, string? HostName)> ScanAsync(
+            ScanRange range,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var channel = Channel.CreateUnbounded<(string Ip, string? Mac, string? HostName)>();
@@ -25,12 +25,12 @@ namespace IPTracker
             {
                 try
                 {
-                    var tasks = Enumerable.Range(1, 255).Select(async i =>
+                    var tasks = Enumerable.Range(range.Start, range.End - range.Start + 1).Select(async i =>
                     {
                         await semaphore.WaitAsync(cancellationToken);
                         try
                         {
-                            var ip = BaseAddress + i;
+                            var ip = range.BaseAddress + i;
                             using var ping = new Ping();
                             var reply = await ping.SendPingAsync(
                                 IPAddress.Parse(ip),

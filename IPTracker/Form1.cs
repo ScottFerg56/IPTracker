@@ -6,6 +6,7 @@ namespace IPTracker
 		private static readonly string LogFilePath = Path.ChangeExtension(XmlFilePath, ".log");
 
 		private List<NetworkDevice> _devices = [];
+		private ScanRange _scanRange = new();
 		private string? _sortColumn;
 		private bool _sortAscending = true;
 		private readonly AppSettings _settings = AppSettings.Load();
@@ -30,7 +31,7 @@ namespace IPTracker
 				new DataGridViewTextBoxColumn { HeaderText = "Comments",     DataPropertyName = nameof(NetworkDevice.Comments),     SortMode = DataGridViewColumnSortMode.Programmatic }
 			);
 
-			_devices = NetworkDevice.LoadFromXml(XmlFilePath);
+			(_devices, _scanRange) = NetworkDevice.LoadFromXml(XmlFilePath);
 			dgvDevices.DataSource = _devices;
 
 			if (_settings.ColumnWidths.Count > 0)
@@ -130,17 +131,18 @@ namespace IPTracker
 			scanMenuItem.Enabled = false;
 			scanMenuItem.Text = "Scanning…";
 			Log($"--- Scan started {DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
+			await OuiLookup.EnsureInitializedAsync();
 			bool anyChanges = false;
 			try
 			{
-				await foreach (var (ip, mac, hostName) in LanScanner.ScanAsync(_scanCts.Token))
+				await foreach (var (ip, mac, hostName) in LanScanner.ScanAsync(_scanRange, _scanCts.Token))
 					anyChanges |= MergeDevice(ip, mac, hostName);
 			}
 			catch (OperationCanceledException) { }
 			finally
 			{
 				if (anyChanges)
-					NetworkDevice.SaveToXml(_devices, XmlFilePath);
+					NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 				scanMenuItem.Text = "Scan";
 				scanMenuItem.Enabled = true;
 			}
@@ -188,6 +190,17 @@ namespace IPTracker
 				Log($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
 				device.Name = hostName;
 				changed = true;
+			}
+
+			if (device != null && mac != null && string.IsNullOrEmpty(device.Manufacturer))
+			{
+				var manufacturer = OuiLookup.GetManufacturer(mac);
+				if (manufacturer != null)
+				{
+					Log($"{device.MacAddress}  Manufacturer: '{manufacturer}'");
+					device.Manufacturer = manufacturer;
+					changed = true;
+				}
 			}
 
 			RefreshGrid();
