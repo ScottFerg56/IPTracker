@@ -8,6 +8,7 @@ A Windows desktop app for viewing network devices from an XML data file in a sor
 - Click any column header to sort ascending/descending
 - Persists window position, size, sort state, and column widths between sessions
 - Scan the LAN (192.168.0.1–255) to discover active devices, resolving MAC addresses and hostnames, automatically updating the device list as results arrive
+- Scrollable output panel shows scan activity log in real time
 
 ## Requirements
 

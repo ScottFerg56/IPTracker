@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace IPTracker
 {
 	public partial class MainForm : Form
@@ -56,6 +54,7 @@ namespace IPTracker
 		private void OnLoad(object? sender, EventArgs e)
 		{
 			WindowState = _settings.WindowState;
+			splitContainer.SplitterDistance = _settings.SplitterDistance;
 
 			if (!string.IsNullOrEmpty(_sortColumn))
 			{
@@ -64,6 +63,12 @@ namespace IPTracker
 				if (col != null)
 					col.HeaderCell.SortGlyphDirection = _sortAscending ? SortOrder.Ascending : SortOrder.Descending;
 			}
+		}
+
+		private void Log(string message)
+		{
+			rtbOutput.AppendText(message + Environment.NewLine);
+			rtbOutput.ScrollToCaret();
 		}
 
 		private static uint IpSortKey(string ip)
@@ -145,14 +150,14 @@ namespace IPTracker
 				{
 					device = new NetworkDevice { IpAddress = ip, MacAddress = mac };
 					_devices.Add(device);
-					Debug.WriteLine($"{mac}  Added: {ip}");
+					Log($"{mac}  Added: {ip}");
 				}
 				else
 				{
 					device = byMac;
 					if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
 					{
-						Debug.WriteLine($"{mac}  IP: {byMac.IpAddress} -> {ip}");
+						Log($"{mac}  IP: {byMac.IpAddress} -> {ip}");
 						byMac.IpAddress = ip;
 					}
 				}
@@ -160,13 +165,13 @@ namespace IPTracker
 
 			if (byIp != null && byIp != byMac)
 			{
-				Debug.WriteLine($"{byIp.MacAddress}  IP cleared: {ip}");
+				Log($"{byIp.MacAddress}  IP cleared: {ip}");
 				byIp.IpAddress = string.Empty;
 			}
 
 			if (device != null && hostName != null && !string.Equals(device.Name, hostName, StringComparison.OrdinalIgnoreCase))
 			{
-				Debug.WriteLine($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
+				Log($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
 				device.Name = hostName;
 			}
 
@@ -201,6 +206,7 @@ namespace IPTracker
 			foreach (DataGridViewColumn col in dgvDevices.Columns)
 				settings.ColumnWidths[col.DataPropertyName] = col.Width;
 
+			settings.SplitterDistance = splitContainer.SplitterDistance;
 			settings.Save();
 		}
 	}

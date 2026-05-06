@@ -1,4 +1,4 @@
-﻿namespace IPTracker
+namespace IPTracker
 {
 	partial class MainForm
 	{
@@ -29,10 +29,15 @@
 		private void InitializeComponent()
 		{
 			components = new System.ComponentModel.Container();
-			dgvDevices = new DataGridView();
-			menuStrip = new MenuStrip();
-			scanMenuItem = new ToolStripMenuItem("Scan");
+			dgvDevices    = new DataGridView();
+			splitContainer = new SplitContainer();
+			rtbOutput     = new RichTextBox();
+			menuStrip     = new MenuStrip();
+			scanMenuItem  = new ToolStripMenuItem("Scan");
 			((System.ComponentModel.ISupportInitialize)dgvDevices).BeginInit();
+			((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
+			splitContainer.Panel1.SuspendLayout();
+			splitContainer.Panel2.SuspendLayout();
 			menuStrip.SuspendLayout();
 			SuspendLayout();
 
@@ -47,16 +52,36 @@
 			dgvDevices.Name = "dgvDevices";
 			dgvDevices.TabIndex = 0;
 
+			rtbOutput.Dock = DockStyle.Fill;
+			rtbOutput.ReadOnly = true;
+			rtbOutput.ScrollBars = RichTextBoxScrollBars.Vertical;
+			rtbOutput.BackColor = SystemColors.Window;
+			rtbOutput.Font = new Font("Consolas", 9F);
+			rtbOutput.Name = "rtbOutput";
+			rtbOutput.TabIndex = 0;
+
+			splitContainer.Dock = DockStyle.Fill;
+			splitContainer.Orientation = Orientation.Horizontal;
+			splitContainer.Panel1MinSize = 100;
+			splitContainer.Panel2MinSize = 50;
+			splitContainer.Name = "splitContainer";
+			splitContainer.TabIndex = 0;
+			splitContainer.Panel1.Controls.Add(dgvDevices);
+			splitContainer.Panel2.Controls.Add(rtbOutput);
+
 			menuStrip.Items.Add(scanMenuItem);
 
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(900, 500);
-			Controls.Add(dgvDevices);
+			ClientSize = new Size(900, 600);
+			Controls.Add(splitContainer);
 			Controls.Add(menuStrip);
 			MainMenuStrip = menuStrip;
 			Text = "IP Tracker";
 
 			((System.ComponentModel.ISupportInitialize)dgvDevices).EndInit();
+			((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
+			splitContainer.Panel1.ResumeLayout(false);
+			splitContainer.Panel2.ResumeLayout(false);
 			menuStrip.ResumeLayout(false);
 			menuStrip.PerformLayout();
 			ResumeLayout(false);
@@ -64,6 +89,8 @@
 		}
 
 		private DataGridView dgvDevices = null!;
+		private SplitContainer splitContainer = null!;
+		private RichTextBox rtbOutput = null!;
 		private MenuStrip menuStrip = null!;
 		private ToolStripMenuItem scanMenuItem = null!;
 

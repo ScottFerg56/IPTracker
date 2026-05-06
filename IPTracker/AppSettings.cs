@@ -11,6 +11,7 @@ namespace IPTracker
         public int WindowHeight { get; set; } = 500;
         public string? SortColumn { get; set; }
         public bool SortAscending { get; set; } = true;
+        public int SplitterDistance { get; set; } = 300;
         public Dictionary<string, int> ColumnWidths { get; set; } = [];
 
         private static string DefaultPath => Path.Combine(
@@ -44,6 +45,10 @@ namespace IPTracker
                     s.SortAscending = (bool?)sort.Attribute("Ascending") ?? true;
                 }
 
+                var splitter = root.Element("Splitter");
+                if (splitter != null)
+                    s.SplitterDistance = (int?)splitter.Attribute("Distance") ?? s.SplitterDistance;
+
                 foreach (var col in root.Element("Columns")?.Elements("Column") ?? [])
                 {
                     var name  = (string?)col.Attribute("Name");
@@ -76,6 +81,8 @@ namespace IPTracker
                     new XElement("Sort",
                         new XAttribute("Column",    SortColumn ?? string.Empty),
                         new XAttribute("Ascending", SortAscending)),
+                    new XElement("Splitter",
+                        new XAttribute("Distance", SplitterDistance)),
                     new XElement("Columns",
                         ColumnWidths.Select(kvp =>
                             new XElement("Column",
