@@ -41,7 +41,7 @@ namespace IPTracker
         public static void SaveToXml(List<NetworkDevice> devices, ScanRange range, string path)
         {
             new XDocument(
-                new XElement("rows",
+                new XElement("devices",
                     new XAttribute("base",  range.BaseAddress),
                     new XAttribute("start", range.Start),
                     new XAttribute("end",   range.End),

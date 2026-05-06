@@ -77,8 +77,11 @@ namespace IPTracker
         {
             try
             {
-                var entry = await Dns.GetHostEntryAsync(ip, cancellationToken);
-                return entry.HostName;
+                var entry    = await Dns.GetHostEntryAsync(ip, cancellationToken);
+                var hostName = entry.HostName;
+                if (hostName.EndsWith(".local", StringComparison.OrdinalIgnoreCase))
+                    hostName = hostName[..^6];
+                return hostName;
             }
             catch
             {
