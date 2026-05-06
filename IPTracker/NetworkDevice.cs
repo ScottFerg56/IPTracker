@@ -25,5 +25,19 @@ namespace IPTracker
                 })
                 .ToList();
         }
+
+        public static void SaveToXml(List<NetworkDevice> devices, string path)
+        {
+            new XDocument(
+                new XElement("rows",
+                    devices.Select(d =>
+                        new XElement("row",
+                            new XAttribute("name",         d.Name),
+                            new XAttribute("ip",           d.IpAddress),
+                            new XAttribute("manufacturer", d.Manufacturer),
+                            new XAttribute("mac",          d.MacAddress),
+                            new XAttribute("comments",     d.Comments)))))
+            .Save(path);
+        }
     }
 }

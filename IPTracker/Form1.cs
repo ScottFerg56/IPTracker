@@ -129,26 +129,31 @@ namespace IPTracker
 			_scanCts = new CancellationTokenSource();
 			scanMenuItem.Enabled = false;
 			scanMenuItem.Text = "Scanning…";
+			Log($"--- Scan started {DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
+			bool anyChanges = false;
 			try
 			{
 				await foreach (var (ip, mac, hostName) in LanScanner.ScanAsync(_scanCts.Token))
-					MergeDevice(ip, mac, hostName);
+					anyChanges |= MergeDevice(ip, mac, hostName);
 			}
 			catch (OperationCanceledException) { }
 			finally
 			{
+				if (anyChanges)
+					NetworkDevice.SaveToXml(_devices, XmlFilePath);
 				scanMenuItem.Text = "Scan";
 				scanMenuItem.Enabled = true;
 			}
 		}
 
-		private void MergeDevice(string ip, string? mac, string? hostName)
+		private bool MergeDevice(string ip, string? mac, string? hostName)
 		{
 			var byMac = mac != null
 				? _devices.FirstOrDefault(d => string.Equals(d.MacAddress, mac, StringComparison.OrdinalIgnoreCase))
 				: null;
 			var byIp = _devices.FirstOrDefault(d => string.Equals(d.IpAddress, ip, StringComparison.OrdinalIgnoreCase));
 
+			bool changed = false;
 			NetworkDevice? device = null;
 			if (mac != null)
 			{
@@ -157,6 +162,7 @@ namespace IPTracker
 					device = new NetworkDevice { IpAddress = ip, MacAddress = mac };
 					_devices.Add(device);
 					Log($"{mac}  Added: {ip}");
+					changed = true;
 				}
 				else
 				{
@@ -165,6 +171,7 @@ namespace IPTracker
 					{
 						Log($"{mac}  IP: {byMac.IpAddress} -> {ip}");
 						byMac.IpAddress = ip;
+						changed = true;
 					}
 				}
 			}
@@ -173,15 +180,18 @@ namespace IPTracker
 			{
 				Log($"{byIp.MacAddress}  IP cleared: {ip}");
 				byIp.IpAddress = string.Empty;
+				changed = true;
 			}
 
 			if (device != null && hostName != null && !string.Equals(device.Name, hostName, StringComparison.OrdinalIgnoreCase))
 			{
 				Log($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
 				device.Name = hostName;
+				changed = true;
 			}
 
 			RefreshGrid();
+			return changed;
 		}
 
 		private void RefreshGrid()
