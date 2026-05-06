@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
@@ -16,10 +15,10 @@ namespace IPTracker
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(uint destIp, uint srcIp, byte[] macAddr, ref int macAddrLen);
 
-        public static async IAsyncEnumerable<(string Ip, string? Mac)> ScanAsync(
+        public static async IAsyncEnumerable<(string Ip, string? Mac, string? HostName)> ScanAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var channel = Channel.CreateUnbounded<(string Ip, string? Mac)>();
+            var channel = Channel.CreateUnbounded<(string Ip, string? Mac, string? HostName)>();
             var semaphore = new SemaphoreSlim(MaxConcurrency);
 
             var producer = Task.Run(async () =>
@@ -39,9 +38,9 @@ namespace IPTracker
                                 cancellationToken: cancellationToken);
                             if (reply.Status == IPStatus.Success)
                             {
-                                var mac = GetMacAddress(ip);
-                            //    Debug.WriteLine($"{ip}  {mac}");
-                                await channel.Writer.WriteAsync((ip, mac), cancellationToken);
+                                var mac      = GetMacAddress(ip);
+                                var hostName = await GetHostNameAsync(ip, cancellationToken);
+                                await channel.Writer.WriteAsync((ip, mac, hostName), cancellationToken);
                             }
                         }
                         catch (OperationCanceledException) { throw; }
@@ -72,6 +71,19 @@ namespace IPTracker
                 return null;
 
             return string.Join(":", macAddr.Take(macAddrLen).Select(b => b.ToString("X2")));
+        }
+
+        private static async Task<string?> GetHostNameAsync(string ip, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var entry = await Dns.GetHostEntryAsync(ip, cancellationToken);
+                return entry.HostName;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

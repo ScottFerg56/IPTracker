@@ -120,8 +120,8 @@ namespace IPTracker
 			scanMenuItem.Text = "Scanning…";
 			try
 			{
-				await foreach (var (ip, mac) in LanScanner.ScanAsync(_scanCts.Token))
-					MergeDevice(ip, mac);
+				await foreach (var (ip, mac, hostName) in LanScanner.ScanAsync(_scanCts.Token))
+					MergeDevice(ip, mac, hostName);
 			}
 			catch (OperationCanceledException) { }
 			finally
@@ -131,31 +131,43 @@ namespace IPTracker
 			}
 		}
 
-		private void MergeDevice(string ip, string? mac)
+		private void MergeDevice(string ip, string? mac, string? hostName)
 		{
 			var byMac = mac != null
 				? _devices.FirstOrDefault(d => string.Equals(d.MacAddress, mac, StringComparison.OrdinalIgnoreCase))
 				: null;
 			var byIp = _devices.FirstOrDefault(d => string.Equals(d.IpAddress, ip, StringComparison.OrdinalIgnoreCase));
 
+			NetworkDevice? device = null;
 			if (mac != null)
 			{
 				if (byMac == null)
 				{
-					_devices.Add(new NetworkDevice { IpAddress = ip, MacAddress = mac });
-					Debug.WriteLine($"Added: {ip}  {mac}");
+					device = new NetworkDevice { IpAddress = ip, MacAddress = mac };
+					_devices.Add(device);
+					Debug.WriteLine($"{mac}  Added: {ip}");
 				}
-				else if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
+				else
 				{
-					Debug.WriteLine($"Updated IP for {mac}: {byMac.IpAddress} -> {ip}");
-					byMac.IpAddress = ip;
+					device = byMac;
+					if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
+					{
+						Debug.WriteLine($"{mac}  IP: {byMac.IpAddress} -> {ip}");
+						byMac.IpAddress = ip;
+					}
 				}
 			}
 
 			if (byIp != null && byIp != byMac)
 			{
-				Debug.WriteLine($"Cleared IP {ip} from {byIp.MacAddress}");
+				Debug.WriteLine($"{byIp.MacAddress}  IP cleared: {ip}");
 				byIp.IpAddress = string.Empty;
+			}
+
+			if (device != null && hostName != null && !string.Equals(device.Name, hostName, StringComparison.OrdinalIgnoreCase))
+			{
+				Debug.WriteLine($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
+				device.Name = hostName;
 			}
 
 			RefreshGrid();
