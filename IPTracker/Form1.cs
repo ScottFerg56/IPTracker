@@ -55,8 +55,9 @@ namespace IPTracker
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
 			dgvDevices.CellBeginEdit += OnCellBeginEdit;
 			dgvDevices.CellEndEdit   += OnCellEndEdit;
-			openMenuItem.Click += OnOpenClick;
-			scanMenuItem.Click += OnScanClick;
+			openMenuItem.Click     += OnOpenClick;
+			settingsMenuItem.Click += OnSettingsClick;
+			scanMenuItem.Click     += OnScanClick;
 			FormClosing += OnFormClosing;
 			Load += OnLoad;
 		}
@@ -150,6 +151,15 @@ namespace IPTracker
 			Log($"{device.MacAddress}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
 			_editingOriginalComments = null;
 			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
+		}
+
+		private void OnSettingsClick(object? sender, EventArgs e)
+		{
+			using var dlg = new SettingsForm(_scanRange);
+			if (dlg.ShowDialog() != DialogResult.OK) return;
+			_scanRange = dlg.ScanRange;
+			if (File.Exists(XmlFilePath))
+				NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 		}
 
 		private void OnOpenClick(object? sender, EventArgs e)

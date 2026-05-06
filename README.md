@@ -8,6 +8,7 @@ A Windows desktop app for viewing network devices from an XML data file in a sor
 - Displays network devices with Name, IP Address, Manufacturer, MAC Address, and Comments; Comments can be edited in place
 - Click any column header to sort ascending/descending
 - Persists window position, size, sort state, and column widths between sessions
+- Configure the scan IP range via the **Settings** menu item
 - Scan a configurable IP range to discover active devices, resolving MAC addresses, hostnames, and manufacturer names (via IEEE OUI lookup), automatically updating the device list as results arrive
 - Scrollable output panel shows scan activity log in real time, also persisted to `IPTracker.log` alongside the data file
 - Newly discovered devices and changes are written back to the data file automatically
