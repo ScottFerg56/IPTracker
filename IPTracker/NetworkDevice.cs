@@ -15,6 +15,9 @@ namespace IPTracker
 
         public static (List<NetworkDevice> Devices, ScanRange Range) LoadFromXml(string path)
         {
+            if (!File.Exists(path))
+                return ([], new ScanRange());
+
             var doc = XDocument.Load(path);
             var root = doc.Root!;
 

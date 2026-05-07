@@ -22,7 +22,7 @@ IPTracker is a WinForms app (.NET 10, `net10.0-windows`) for viewing and scannin
 
 - `ScanRange` — record with `BaseAddress`, `Start`, `End` (defaults: `"192.168.0."`, `1`, `255`). Stored as attributes on the `<devices>` root element of the XML file.
 
-- `NetworkDevice` — data model with properties in column order: `Active` (bool), `MacAddress`, `IpAddress`, `Manufacturer`, `Name`, `Comments`. All fields are persisted. `LoadFromXml(path)` returns `(List<NetworkDevice> Devices, ScanRange Range)`. `SaveToXml(devices, range, path)` writes both back; all string attributes are null-guarded with `?? string.Empty`.
+- `NetworkDevice` — data model with properties in column order: `Active` (bool), `MacAddress`, `IpAddress`, `Manufacturer`, `Name`, `Comments`. All fields are persisted. `LoadFromXml(path)` returns `(List<NetworkDevice> Devices, ScanRange Range)`; returns empty defaults if the file does not exist. `SaveToXml(devices, range, path)` writes both back; all string attributes are null-guarded with `?? string.Empty`.
 
 - `AppSettings` — reads/writes `%LOCALAPPDATA%\IPTracker\settings.xml` (XML via `XDocument`). Stores window geometry, `WindowState`, sort column/direction, splitter distance, last-opened `XmlFilePath`, and per-column widths keyed by `DataPropertyName`.
 
