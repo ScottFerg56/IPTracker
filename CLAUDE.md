@@ -14,7 +14,7 @@ There are no tests.
 
 ## Architecture
 
-IPTracker is a WinForms app (.NET 10, `net10.0-windows`) that displays, edits, and LAN-scans network devices stored in an XML file.
+IPTracker is a WinForms app (.NET 10, `net10.0-windows`) for viewing and scanning LAN devices and tracking evolving IP assignments, backed by a user-managed XML file.
 
 **Classes:**
 
