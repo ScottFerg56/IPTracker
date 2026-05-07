@@ -17,6 +17,7 @@ namespace IPTracker
 		private readonly AppSettings _settings = AppSettings.Load();
 		private CancellationTokenSource? _scanCts;
 		private string? _editingOriginalComments;
+		private HashSet<string> _activeBeforeScan = [];
 
 		public MainForm()
 		{
@@ -34,11 +35,12 @@ namespace IPTracker
 			Size          = new Size(_settings.WindowWidth, _settings.WindowHeight);
 
 			dgvDevices.Columns.AddRange(
-				new DataGridViewTextBoxColumn { HeaderText = "Name",         DataPropertyName = nameof(NetworkDevice.Name),         SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
-				new DataGridViewTextBoxColumn { HeaderText = "IP Address",   DataPropertyName = nameof(NetworkDevice.IpAddress),    SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
-				new DataGridViewTextBoxColumn { HeaderText = "Manufacturer", DataPropertyName = nameof(NetworkDevice.Manufacturer), SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
-				new DataGridViewTextBoxColumn { HeaderText = "MAC Address",  DataPropertyName = nameof(NetworkDevice.MacAddress),   SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
-				new DataGridViewTextBoxColumn { HeaderText = "Comments",     DataPropertyName = nameof(NetworkDevice.Comments),     SortMode = DataGridViewColumnSortMode.Programmatic }
+				new DataGridViewCheckBoxColumn { HeaderText = "Active",       DataPropertyName = nameof(NetworkDevice.Active),       SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn  { HeaderText = "MAC Address",  DataPropertyName = nameof(NetworkDevice.MacAddress),   SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn  { HeaderText = "IP Address",   DataPropertyName = nameof(NetworkDevice.IpAddress),    SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn  { HeaderText = "Manufacturer", DataPropertyName = nameof(NetworkDevice.Manufacturer), SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn  { HeaderText = "Name",         DataPropertyName = nameof(NetworkDevice.Name),         SortMode = DataGridViewColumnSortMode.Programmatic, ReadOnly = true },
+				new DataGridViewTextBoxColumn  { HeaderText = "Comments",     DataPropertyName = nameof(NetworkDevice.Comments),     SortMode = DataGridViewColumnSortMode.Programmatic }
 			);
 
 			(_devices, _scanRange) = NetworkDevice.LoadFromXml(XmlFilePath);
@@ -152,6 +154,7 @@ namespace IPTracker
 			if (dgvDevices.Columns[e.ColumnIndex].DataPropertyName != nameof(NetworkDevice.Comments)) return;
 
 			var device = _devices[e.RowIndex];
+			device.Comments ??= string.Empty;
 			if (string.Equals(device.Comments, _editingOriginalComments)) return;
 
 			Log($"{device.MacAddress}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
@@ -208,6 +211,12 @@ namespace IPTracker
 			scanMenuItem.Enabled = false;
 			scanMenuItem.Text = "Scanning…";
 			Log($"--- Scan started {DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
+			_activeBeforeScan = _devices
+				.Where(d => d.Active)
+				.Select(d => d.MacAddress)
+				.ToHashSet(StringComparer.OrdinalIgnoreCase);
+			foreach (var d in _devices) d.Active = false;
+			RefreshGrid();
 			await OuiLookup.EnsureInitializedAsync();
 			bool anyChanges = false;
 			try
@@ -218,6 +227,11 @@ namespace IPTracker
 			catch (OperationCanceledException) { }
 			finally
 			{
+				foreach (var d in _devices.Where(d => !d.Active && _activeBeforeScan.Contains(d.MacAddress)))
+				{
+					Log($"{d.MacAddress}  Inactive: {d.IpAddress}");
+					anyChanges = true;
+				}
 				if (anyChanges)
 					NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 				scanMenuItem.Text = "Scan";
@@ -232,26 +246,44 @@ namespace IPTracker
 				: null;
 			var byIp = _devices.FirstOrDefault(d => string.Equals(d.IpAddress, ip, StringComparison.OrdinalIgnoreCase));
 
+			// IP responded but no MAC — mark existing device active, leave IP intact
+			if (mac == null)
+			{
+				if (byIp != null && !byIp.Active)
+				{
+					byIp.Active = true;
+					if (!_activeBeforeScan.Contains(byIp.MacAddress))
+						Log($"{byIp.MacAddress}  Active: {ip}");
+					RefreshGrid();
+					return true;
+				}
+				RefreshGrid();
+				return false;
+			}
+
 			bool changed = false;
 			NetworkDevice? device = null;
-			if (mac != null)
+			if (byMac == null)
 			{
-				if (byMac == null)
+				device = new NetworkDevice { IpAddress = ip, MacAddress = mac, Active = true };
+				_devices.Add(device);
+				Log($"{mac}  Added: {ip}");
+				changed = true;
+			}
+			else
+			{
+				device = byMac;
+				if (!_activeBeforeScan.Contains(device.MacAddress))
 				{
-					device = new NetworkDevice { IpAddress = ip, MacAddress = mac };
-					_devices.Add(device);
-					Log($"{mac}  Added: {ip}");
+					Log($"{device.MacAddress}  Active: {ip}");
 					changed = true;
 				}
-				else
+				device.Active = true;
+				if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
 				{
-					device = byMac;
-					if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
-					{
-						Log($"{mac}  IP: {byMac.IpAddress} -> {ip}");
-						byMac.IpAddress = ip;
-						changed = true;
-					}
+					Log($"{mac}  IP: {byMac.IpAddress} -> {ip}");
+					byMac.IpAddress = ip;
+					changed = true;
 				}
 			}
 

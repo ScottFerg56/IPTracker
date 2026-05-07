@@ -6,11 +6,12 @@ namespace IPTracker
 
     public class NetworkDevice
     {
-        public string Name { get; set; } = string.Empty;
-        public string IpAddress { get; set; } = string.Empty;
+        public bool   Active       { get; set; } = false;
+        public string MacAddress   { get; set; } = string.Empty;
+        public string IpAddress    { get; set; } = string.Empty;
         public string Manufacturer { get; set; } = string.Empty;
-        public string MacAddress { get; set; } = string.Empty;
-        public string Comments { get; set; } = string.Empty;
+        public string Name         { get; set; } = string.Empty;
+        public string Comments     { get; set; } = string.Empty;
 
         public static (List<NetworkDevice> Devices, ScanRange Range) LoadFromXml(string path)
         {
@@ -27,10 +28,11 @@ namespace IPTracker
                 .Elements("row")
                 .Select(e => new NetworkDevice
                 {
-                    Name         = (string?)e.Attribute("name")         ?? string.Empty,
+                    Active       = (bool?)e.Attribute("active")          ?? false,
+                    MacAddress   = (string?)e.Attribute("mac")           ?? string.Empty,
                     IpAddress    = (string?)e.Attribute("ip")            ?? string.Empty,
                     Manufacturer = (string?)e.Attribute("manufacturer")  ?? string.Empty,
-                    MacAddress   = (string?)e.Attribute("mac")           ?? string.Empty,
+                    Name         = (string?)e.Attribute("name")         ?? string.Empty,
                     Comments     = (string?)e.Attribute("comments")      ?? string.Empty,
                 })
                 .ToList();
@@ -47,11 +49,12 @@ namespace IPTracker
                     new XAttribute("end",   range.End),
                     devices.Select(d =>
                         new XElement("row",
-                            new XAttribute("name",         d.Name),
-                            new XAttribute("ip",           d.IpAddress),
-                            new XAttribute("manufacturer", d.Manufacturer),
-                            new XAttribute("mac",          d.MacAddress),
-                            new XAttribute("comments",     d.Comments)))))
+                            new XAttribute("active",       d.Active),
+                            new XAttribute("mac",          d.MacAddress   ?? string.Empty),
+                            new XAttribute("ip",           d.IpAddress    ?? string.Empty),
+                            new XAttribute("manufacturer", d.Manufacturer ?? string.Empty),
+                            new XAttribute("name",         d.Name         ?? string.Empty),
+                            new XAttribute("comments",     d.Comments     ?? string.Empty)))))
             .Save(path);
         }
     }
