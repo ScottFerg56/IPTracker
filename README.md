@@ -1,16 +1,14 @@
 # IPTracker
 
-A Windows desktop app for viewing network devices from an XML data file in a sortable, resizable grid.
+A Windows desktop app for viewing and scanning network devices.
 
 ## Features
 
 - Create a new empty devices file via the **New** menu item, or open an existing one via **Open**; the last opened file is restored on next launch
 - Displays network devices with Active status, MAC Address, IP Address, Manufacturer, Name, and Comments; Comments can be edited in place
-- Click any column header to sort ascending/descending
-- Persists window position, size, sort state, and column widths between sessions
 - Configure the scan IP range via the **Settings** menu item
-- Scan a configurable IP range to discover active devices, resolving MAC addresses, hostnames, and manufacturer names (via IEEE OUI lookup), automatically updating the device list as results arrive
-- Scrollable output panel shows scan activity log in real time, also persisted to `IPTracker.log` alongside the data file
+- Scan the LAN to discover active devices, resolving MAC addresses, hostnames, and manufacturer names (via IEEE OUI lookup), automatically updating the device list as results arrive
+- Scrollable output panel shows scan activity log in real time, also persisted to a `.log` file alongside the data file
 - Newly discovered devices and changes are written back to the data file automatically
 
 ## Requirements
@@ -20,23 +18,10 @@ A Windows desktop app for viewing network devices from an XML data file in a sor
 
 ## Data File
 
-The app reads device data from a hardcoded path:
-
-```
-C:\Users\Scott\SynologyDrive\Documents\IPTracker.xml
-```
-
-The XML format expects `<row>` elements with the following attributes:
+The XML format uses a `<devices>` root element with scan range attributes and `<row>` child elements:
 
 ```xml
-<rows>
-  <row name="Router" ip="192.168.1.1" manufacturer="Netgear" mac="AA:BB:CC:DD:EE:FF" comments="" />
-</rows>
-```
-
-## Build
-
-```powershell
-dotnet build
-dotnet run --project IPTracker
+<devices base="192.168.0." start="1" end="255">
+  <row active="false" mac="AA:BB:CC:DD:EE:FF" ip="192.168.0.1" manufacturer="Netgear" name="Router" comments="" />
+</devices>
 ```
