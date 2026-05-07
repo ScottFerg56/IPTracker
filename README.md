@@ -19,6 +19,7 @@ Run with `--scan` to perform a headless scan and exit without showing the UI. Us
 IPTracker.exe --scan
 ```
 
+
 ## Requirements
 
 - Windows
