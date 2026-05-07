@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```powershell
 dotnet build
 dotnet run --project IPTracker
+dotnet run --project IPTracker -- --scan   # headless scan, no UI
 dotnet build -c Release
 ```
 
@@ -28,7 +29,7 @@ IPTracker is a WinForms app (.NET 10, `net10.0-windows`) for viewing and scannin
 
 - `OuiLookup` — static class resolving the first 3 MAC octets (OUI) to a manufacturer name. Downloads the IEEE OUI CSV (`https://standards-oui.ieee.org/oui/oui.csv`) to `%LOCALAPPDATA%\IPTracker\oui.csv` on first use, refreshing if older than 30 days. Dictionary keyed by 6-char uppercase hex OUI. Sets `Manufacturer` only when the field is currently empty, preserving user-edited values.
 
-- `HeadlessScan` — static class invoked when the app is launched with `--scan`. Loads `AppSettings` to find the XML path, runs the full scan/merge/log cycle without any UI, and saves the XML if changes were detected. Writes to the same `.log` file as the interactive app. Contains its own `Merge` method (parallel to `MainForm.MergeDevice`) since there is no grid to refresh.
+- `HeadlessScan` — static class invoked when the app is launched with `--scan`. Loads `AppSettings` to find the XML path, runs the full scan/merge/log cycle (including "Scan started"/"Scan finished" timestamps) without any UI, and saves the XML if changes were detected. Writes to the same `.log` file as the interactive app. Contains its own `Merge` method (parallel to `MainForm.MergeDevice`) since there is no grid to refresh.
 
 - `LanScanner` — static class that pings the range defined by `ScanRange` in parallel (up to 50 concurrent via `SemaphoreSlim`), resolves MAC addresses via `SendARP` P/Invoke from `iphlpapi.dll`, and resolves hostnames via `Dns.GetHostEntryAsync` (`.local` suffix trimmed). Returns `IAsyncEnumerable<(string Ip, string? Mac, string? HostName)>` via a `Channel` so results stream to the UI thread as they arrive.
 
@@ -39,6 +40,6 @@ IPTracker is a WinForms app (.NET 10, `net10.0-windows`) for viewing and scannin
   - Sorting uses reflection for all columns except `IpAddress`, which converts to a `uint` via bit-shifts for correct numeric ordering.
   - Comments column is editable in-place. `CellBeginEdit` captures the original value; `CellEndEdit` logs the change and saves the XML. All other columns are column-level read-only. Pressing Delete with a row selected shows a confirmation dialog; on confirm, the device is logged (all properties), removed from `_devices`, and the XML is saved.
   - `Log()` writes to `rtbOutput` and appends a timestamped line to the `.log` file alongside the XML file (never overwritten, extended across runs).
-  - **Scan flow:** captures `_activeBeforeScan` (MACs currently active), marks all devices `Active = false`, then streams results to `MergeDevice`. `MergeDevice` sets `Active = true` for found devices, logging only genuine state transitions. After the loop, newly-inactive devices (were in `_activeBeforeScan`, still `Active = false`) are logged. Any Active-state change, IP move, new device, or name/manufacturer update triggers `SaveToXml`. If `SendARP` returns no MAC, the device at that IP (if known) is marked active with its IP preserved; no new device is added.
+  - **Scan flow:** logs "Scan started" timestamp, captures `_activeBeforeScan` (MACs currently active), marks all devices `Active = false`, then streams results to `MergeDevice`. `MergeDevice` sets `Active = true` for found devices, logging only genuine state transitions. After the loop, newly-inactive devices (were in `_activeBeforeScan`, still `Active = false`) are logged, then "Scan finished" is logged. Any Active-state change, IP move, new device, or name/manufacturer update triggers `SaveToXml`. If `SendARP` returns no MAC, the device at that IP (if known) is marked active with its IP preserved; no new device is added.
 
 **Default data path:** `%USERPROFILE%\Documents\IPTracker.xml` (via `Environment.SpecialFolder.MyDocuments`), overridden by the last-opened path saved in `AppSettings`.
