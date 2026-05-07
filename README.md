@@ -1,6 +1,6 @@
 # IPTracker
 
-A Windows desktop app for viewing and scanning network devices.
+A Windows desktop app for viewing and scanning LAN devices and tracking evolving IP assignments.
 
 ## Features
 
