@@ -62,6 +62,7 @@ namespace IPTracker
 			dgvDevices.ColumnHeaderMouseClick += OnColumnHeaderMouseClick;
 			dgvDevices.CellBeginEdit += OnCellBeginEdit;
 			dgvDevices.CellEndEdit   += OnCellEndEdit;
+			dgvDevices.KeyDown       += OnGridKeyDown;
 			newMenuItem.Click      += OnNewClick;
 			openMenuItem.Click     += OnOpenClick;
 			settingsMenuItem.Click += OnSettingsClick;
@@ -133,6 +134,23 @@ namespace IPTracker
 				.FirstOrDefault(c => c.DataPropertyName == propName);
 			if (sortedCol != null)
 				sortedCol.HeaderCell.SortGlyphDirection = ascending ? SortOrder.Ascending : SortOrder.Descending;
+		}
+
+		private void OnGridKeyDown(object? sender, KeyEventArgs e)
+		{
+			if (e.KeyCode != Keys.Delete || dgvDevices.CurrentRow == null) return;
+
+			var device = _devices[dgvDevices.CurrentRow.Index];
+			var result = MessageBox.Show(
+				$"Delete {device.MacAddress} ({device.IpAddress})?",
+				"Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+			if (result != DialogResult.Yes) return;
+
+			Log($"{device.MacAddress}  Deleted: IP='{device.IpAddress}' Name='{device.Name}' Manufacturer='{device.Manufacturer}' Active={device.Active} Comments='{device.Comments}'");
+			_devices.Remove(device);
+			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
+			RefreshGrid();
+			e.Handled = true;
 		}
 
 		private void OnColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)

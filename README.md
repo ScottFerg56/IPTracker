@@ -5,7 +5,7 @@ A Windows desktop app for viewing and scanning network devices.
 ## Features
 
 - Create a new empty devices file via the **New** menu item, or open an existing one via **Open**; the last opened file is restored on next launch
-- Displays network devices with Active status, MAC Address, IP Address, Manufacturer, Name, and Comments; Comments can be edited in place
+- Displays network devices with Active status, MAC Address, IP Address, Manufacturer, Name, and Comments; Comments can be edited in place; press Delete to remove a device
 - Configure the scan IP range via the **Settings** menu item
 - Scan the LAN to discover active devices, resolving MAC addresses, hostnames, and manufacturer names (via IEEE OUI lookup), automatically updating the device list as results arrive
 - Scrollable output panel shows scan activity log in real time, also persisted to a `.log` file alongside the data file
