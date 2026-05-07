@@ -250,6 +250,7 @@ namespace IPTracker
 					Log($"{d.MacAddress}  Inactive: {d.IpAddress}");
 					anyChanges = true;
 				}
+				Log($"--- Scan finished {DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
 				if (anyChanges)
 					NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 				scanMenuItem.Text = "Scan";

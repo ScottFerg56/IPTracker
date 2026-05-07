@@ -28,6 +28,8 @@ IPTracker is a WinForms app (.NET 10, `net10.0-windows`) for viewing and scannin
 
 - `OuiLookup` — static class resolving the first 3 MAC octets (OUI) to a manufacturer name. Downloads the IEEE OUI CSV (`https://standards-oui.ieee.org/oui/oui.csv`) to `%LOCALAPPDATA%\IPTracker\oui.csv` on first use, refreshing if older than 30 days. Dictionary keyed by 6-char uppercase hex OUI. Sets `Manufacturer` only when the field is currently empty, preserving user-edited values.
 
+- `HeadlessScan` — static class invoked when the app is launched with `--scan`. Loads `AppSettings` to find the XML path, runs the full scan/merge/log cycle without any UI, and saves the XML if changes were detected. Writes to the same `.log` file as the interactive app. Contains its own `Merge` method (parallel to `MainForm.MergeDevice`) since there is no grid to refresh.
+
 - `LanScanner` — static class that pings the range defined by `ScanRange` in parallel (up to 50 concurrent via `SemaphoreSlim`), resolves MAC addresses via `SendARP` P/Invoke from `iphlpapi.dll`, and resolves hostnames via `Dns.GetHostEntryAsync` (`.local` suffix trimmed). Returns `IAsyncEnumerable<(string Ip, string? Mac, string? HostName)>` via a `Channel` so results stream to the UI thread as they arrive.
 
 - `MainForm` — orchestrates everything. Key details:

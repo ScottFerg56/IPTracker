@@ -11,6 +11,14 @@ A Windows desktop app for viewing and scanning LAN devices and tracking evolving
 - Scrollable output panel shows scan activity log in real time, also persisted to a `.log` file alongside the data file
 - Newly discovered devices and changes are written back to the data file automatically
 
+## Command Line
+
+Run with `--scan` to perform a headless scan and exit without showing the UI. Uses the last-opened file from saved settings. Results are written to the `.log` file alongside the data file.
+
+```powershell
+IPTracker.exe --scan
+```
+
 ## Requirements
 
 - Windows
