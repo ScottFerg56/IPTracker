@@ -54,7 +54,7 @@ namespace IPTracker
                     new XAttribute("base",  range.BaseAddress),
                     new XAttribute("start", range.Start),
                     new XAttribute("end",   range.End),
-                    devices.Select(d =>
+                    devices.OrderBy(d => d.MacAddress, StringComparer.OrdinalIgnoreCase).Select(d =>
                         new XElement("row",
                             new XAttribute("active",       d.Active),
                             new XAttribute("mac",          d.MacAddress   ?? string.Empty),
