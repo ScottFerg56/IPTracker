@@ -19,16 +19,17 @@ namespace IPTracker
 		private string? _editingOriginalComments;
 		private HashSet<string> _activeBeforeScan = [];
 
-		public MainForm()
+		public MainForm(string? filePathOverride = null)
 		{
 			InitializeComponent();
 
 			// Apply position/size before the handle is created so there's no flicker.
 			// WindowState is deferred to OnLoad — setting it in the constructor can
 			// prevent Location/Size from taking effect.
-			XmlFilePath = !string.IsNullOrEmpty(_settings.XmlFilePath)
-				? _settings.XmlFilePath
-				: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml");
+			XmlFilePath = filePathOverride
+				?? (!string.IsNullOrEmpty(_settings.XmlFilePath)
+					? _settings.XmlFilePath
+					: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml"));
 
 			StartPosition = FormStartPosition.Manual;
 			Location      = new Point(_settings.WindowX, _settings.WindowY);

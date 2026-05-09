@@ -2,12 +2,20 @@ namespace IPTracker
 {
     internal static class HeadlessScan
     {
-        public static async Task RunAsync()
+        public static async Task RunAsync(string? filePathOverride = null)
         {
             var settings = AppSettings.Load();
-            var xmlPath  = !string.IsNullOrEmpty(settings.XmlFilePath)
-                ? settings.XmlFilePath
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml");
+            var xmlPath  = filePathOverride
+                ?? (!string.IsNullOrEmpty(settings.XmlFilePath)
+                    ? settings.XmlFilePath
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "IPTracker.xml"));
+
+            if (filePathOverride != null &&
+                !string.Equals(settings.XmlFilePath, filePathOverride, StringComparison.OrdinalIgnoreCase))
+            {
+                settings.XmlFilePath = filePathOverride;
+                settings.Save();
+            }
 
             if (!File.Exists(xmlPath))
             {

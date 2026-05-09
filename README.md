@@ -13,10 +13,15 @@ A Windows desktop app for viewing and scanning LAN devices and tracking evolving
 
 ## Command Line
 
-Run with `--scan` to perform a headless scan and exit without showing the UI. Uses the last-opened file from saved settings. Results are written to the `.log` file alongside the data file.
+| Argument | Description |
+|---|---|
+| `--file <path>` | Open the specified device file instead of the last-opened one. The path is saved to settings and becomes the new default. |
+| `--scan` | Perform a headless scan and exit without showing the UI. Results are written to the `.log` file alongside the data file. |
+
+Both arguments can be combined:
 
 ```powershell
-IPTracker.exe --scan
+IPTracker.exe --scan --file C:\path\to\devices.xml
 ```
 
 
