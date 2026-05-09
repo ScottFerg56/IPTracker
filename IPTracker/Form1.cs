@@ -146,7 +146,7 @@ namespace IPTracker
 				"Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 			if (result != DialogResult.Yes) return;
 
-			Log($"{device.MacAddress}  Deleted: IP='{device.IpAddress}' Name='{device.Name}' Manufacturer='{device.Manufacturer}' Active={device.Active} Comments='{device.Comments}'");
+			Log($"{device.LogTag()}  Deleted: IP='{device.IpAddress}' Name='{device.Name}' Manufacturer='{device.Manufacturer}' Active={device.Active} Comments='{device.Comments}'");
 			_devices.Remove(device);
 			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 			RefreshGrid();
@@ -175,7 +175,7 @@ namespace IPTracker
 			device.Comments ??= string.Empty;
 			if (string.Equals(device.Comments, _editingOriginalComments)) return;
 
-			Log($"{device.MacAddress}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
+			Log($"{device.LogTag()}  Comments: '{_editingOriginalComments}' -> '{device.Comments}'");
 			_editingOriginalComments = null;
 			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 		}
@@ -247,7 +247,7 @@ namespace IPTracker
 			{
 				foreach (var d in _devices.Where(d => !d.Active && _activeBeforeScan.Contains(d.MacAddress)))
 				{
-					Log($"{d.MacAddress}  Inactive: {d.IpAddress}");
+					Log($"{d.LogTag()}  Inactive: {d.IpAddress}");
 					anyChanges = true;
 				}
 				Log($"--- Scan finished {DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
@@ -272,7 +272,7 @@ namespace IPTracker
 				{
 					byIp.Active = true;
 					if (!_activeBeforeScan.Contains(byIp.MacAddress))
-						Log($"{byIp.MacAddress}  Active: {ip}");
+						Log($"{byIp.LogTag()}  Active: {ip}");
 					RefreshGrid();
 					return true;
 				}
@@ -286,7 +286,7 @@ namespace IPTracker
 			{
 				device = new NetworkDevice { IpAddress = ip, MacAddress = mac, Active = true };
 				_devices.Add(device);
-				Log($"{mac}  Added: {ip}");
+				Log($"{device.LogTag()}  Added: {ip}");
 				changed = true;
 			}
 			else
@@ -294,13 +294,13 @@ namespace IPTracker
 				device = byMac;
 				if (!_activeBeforeScan.Contains(device.MacAddress))
 				{
-					Log($"{device.MacAddress}  Active: {ip}");
+					Log($"{device.LogTag()}  Active: {ip}");
 					changed = true;
 				}
 				device.Active = true;
 				if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
 				{
-					Log($"{mac}  IP: {byMac.IpAddress} -> {ip}");
+					Log($"{device.LogTag()}  IP: {byMac.IpAddress} -> {ip}");
 					byMac.IpAddress = ip;
 					changed = true;
 				}
@@ -308,14 +308,14 @@ namespace IPTracker
 
 			if (byIp != null && byIp != byMac)
 			{
-				Log($"{byIp.MacAddress}  IP cleared: {ip}");
+				Log($"{byIp.LogTag()}  IP cleared: {ip}");
 				byIp.IpAddress = string.Empty;
 				changed = true;
 			}
 
 			if (device != null && hostName != null && !string.Equals(device.Name, hostName, StringComparison.OrdinalIgnoreCase))
 			{
-				Log($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
+				Log($"{device.LogTag()}  Name: '{device.Name}' -> '{hostName}'");
 				device.Name = hostName;
 				changed = true;
 			}
@@ -325,7 +325,7 @@ namespace IPTracker
 				var manufacturer = OuiLookup.GetManufacturer(mac);
 				if (manufacturer != null)
 				{
-					Log($"{device.MacAddress}  Manufacturer: '{manufacturer}'");
+					Log($"{device.LogTag()}  Manufacturer: '{manufacturer}'");
 					device.Manufacturer = manufacturer;
 					changed = true;
 				}

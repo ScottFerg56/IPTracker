@@ -13,6 +13,10 @@ namespace IPTracker
         public string Name         { get; set; } = string.Empty;
         public string Comments     { get; set; } = string.Empty;
 
+        public string LogTag() => string.IsNullOrEmpty(Comments)
+            ? MacAddress
+            : $"{MacAddress} ({Comments})";
+
         public static (List<NetworkDevice> Devices, ScanRange Range) LoadFromXml(string path)
         {
             if (!File.Exists(path))

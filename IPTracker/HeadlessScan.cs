@@ -35,7 +35,7 @@ namespace IPTracker
 
             foreach (var d in devices.Where(d => !d.Active && activeBeforeScan.Contains(d.MacAddress)))
             {
-                Log(xmlPath, $"{d.MacAddress}  Inactive: {d.IpAddress}");
+                Log(xmlPath, $"{d.LogTag()}  Inactive: {d.IpAddress}");
                 anyChanges = true;
             }
 
@@ -72,7 +72,7 @@ namespace IPTracker
                 {
                     byIp.Active = true;
                     if (!activeBeforeScan.Contains(byIp.MacAddress))
-                        L($"{byIp.MacAddress}  Active: {ip}");
+                        L($"{byIp.LogTag()}  Active: {ip}");
                     return true;
                 }
                 return false;
@@ -85,7 +85,7 @@ namespace IPTracker
             {
                 device = new NetworkDevice { IpAddress = ip, MacAddress = mac, Active = true };
                 devices.Add(device);
-                L($"{mac}  Added: {ip}");
+                L($"{device.LogTag()}  Added: {ip}");
                 changed = true;
             }
             else
@@ -93,13 +93,13 @@ namespace IPTracker
                 device = byMac;
                 if (!activeBeforeScan.Contains(device.MacAddress))
                 {
-                    L($"{device.MacAddress}  Active: {ip}");
+                    L($"{device.LogTag()}  Active: {ip}");
                     changed = true;
                 }
                 device.Active = true;
                 if (!string.Equals(byMac.IpAddress, ip, StringComparison.OrdinalIgnoreCase))
                 {
-                    L($"{mac}  IP: {byMac.IpAddress} -> {ip}");
+                    L($"{device.LogTag()}  IP: {byMac.IpAddress} -> {ip}");
                     byMac.IpAddress = ip;
                     changed = true;
                 }
@@ -107,7 +107,7 @@ namespace IPTracker
 
             if (byIp != null && byIp != byMac)
             {
-                L($"{byIp.MacAddress}  IP cleared: {ip}");
+                L($"{byIp.LogTag()}  IP cleared: {ip}");
                 byIp.IpAddress = string.Empty;
                 changed = true;
             }
@@ -115,7 +115,7 @@ namespace IPTracker
             if (device != null && hostName != null &&
                 !string.Equals(device.Name, hostName, StringComparison.OrdinalIgnoreCase))
             {
-                L($"{device.MacAddress}  Name: '{device.Name}' -> '{hostName}'");
+                L($"{device.LogTag()}  Name: '{device.Name}' -> '{hostName}'");
                 device.Name = hostName;
                 changed = true;
             }
@@ -125,7 +125,7 @@ namespace IPTracker
                 var manufacturer = OuiLookup.GetManufacturer(mac);
                 if (manufacturer != null)
                 {
-                    L($"{device.MacAddress}  Manufacturer: '{manufacturer}'");
+                    L($"{device.LogTag()}  Manufacturer: '{manufacturer}'");
                     device.Manufacturer = manufacturer;
                     changed = true;
                 }
