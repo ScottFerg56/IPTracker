@@ -3,11 +3,11 @@ namespace IPTracker
 	internal static class Program
 	{
 		[STAThread]
-		static async Task Main(string[] args)
+		static void Main(string[] args)
 		{
 			if (args.Contains("--scan", StringComparer.OrdinalIgnoreCase))
 			{
-				await HeadlessScan.RunAsync();
+				HeadlessScan.RunAsync().GetAwaiter().GetResult();
 				return;
 			}
 
