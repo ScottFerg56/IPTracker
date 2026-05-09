@@ -44,6 +44,8 @@ namespace IPTracker
 				new DataGridViewTextBoxColumn  { HeaderText = "Comments",     DataPropertyName = nameof(NetworkDevice.Comments),     SortMode = DataGridViewColumnSortMode.Programmatic }
 			);
 
+			if (filePathOverride != null && !File.Exists(XmlFilePath))
+				NetworkDevice.SaveToXml([], _scanRange, XmlFilePath);
 			(_devices, _scanRange) = NetworkDevice.LoadFromXml(XmlFilePath);
 			dgvDevices.DataSource = _devices;
 

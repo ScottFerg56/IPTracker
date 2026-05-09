@@ -19,8 +19,13 @@ namespace IPTracker
 
             if (!File.Exists(xmlPath))
             {
-                Log(xmlPath, "Headless scan aborted: file not found");
-                return;
+                if (filePathOverride == null)
+                {
+                    Log(xmlPath, "Headless scan aborted: file not found");
+                    return;
+                }
+                NetworkDevice.SaveToXml([], new ScanRange(), xmlPath);
+                Log(xmlPath, $"Created: {xmlPath}");
             }
 
             var (devices, scanRange) = NetworkDevice.LoadFromXml(xmlPath);
