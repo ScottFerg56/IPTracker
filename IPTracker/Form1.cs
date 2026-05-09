@@ -63,6 +63,7 @@ namespace IPTracker
 			dgvDevices.CellBeginEdit += OnCellBeginEdit;
 			dgvDevices.CellEndEdit   += OnCellEndEdit;
 			dgvDevices.KeyDown       += OnGridKeyDown;
+			dgvDevices.MouseDown     += OnGridMouseDown;
 			newMenuItem.Click      += OnNewClick;
 			openMenuItem.Click     += OnOpenClick;
 			settingsMenuItem.Click += OnSettingsClick;
@@ -151,6 +152,39 @@ namespace IPTracker
 			NetworkDevice.SaveToXml(_devices, _scanRange, XmlFilePath);
 			RefreshGrid();
 			e.Handled = true;
+		}
+
+		private void OnGridMouseDown(object? sender, MouseEventArgs e)
+		{
+			if (e.Button != MouseButtons.Right) return;
+			var hit = dgvDevices.HitTest(e.X, e.Y);
+			if (hit.RowIndex < 0 || hit.RowIndex >= _devices.Count) return;
+
+			dgvDevices.CurrentCell = dgvDevices[hit.ColumnIndex >= 0 ? hit.ColumnIndex : 0, hit.RowIndex];
+
+			var d = _devices[hit.RowIndex];
+			dgvContextMenu.Items.Clear();
+
+			void AddItem(string label, string value)
+			{
+				var item = new ToolStripMenuItem($"{label}  {value}");
+				item.Click += (_, _) => Clipboard.SetText(value);
+				dgvContextMenu.Items.Add(item);
+			}
+
+			AddItem("MAC:",          d.MacAddress);
+			AddItem("IP:",           d.IpAddress);
+			AddItem("Manufacturer:", d.Manufacturer);
+			AddItem("Name:",         d.Name);
+			AddItem("Comments:",     d.Comments);
+			AddItem("Active:",       d.Active.ToString());
+			dgvContextMenu.Items.Add(new ToolStripSeparator());
+			var copyAll = new ToolStripMenuItem("Copy All");
+			copyAll.Click += (_, _) => Clipboard.SetText(
+				$"{d.MacAddress}\t{d.IpAddress}\t{d.Manufacturer}\t{d.Name}\t{d.Comments}\t{d.Active}");
+			dgvContextMenu.Items.Add(copyAll);
+
+			dgvContextMenu.Show(dgvDevices, e.Location);
 		}
 
 		private void OnColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)

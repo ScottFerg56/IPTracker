@@ -29,6 +29,7 @@ namespace IPTracker
 		private void InitializeComponent()
 		{
 			components = new System.ComponentModel.Container();
+			dgvContextMenu = new ContextMenuStrip(components);
 			dgvDevices    = new DataGridView();
 			splitContainer = new SplitContainer();
 			rtbOutput     = new RichTextBox();
@@ -101,6 +102,7 @@ namespace IPTracker
 		private ToolStripMenuItem openMenuItem     = null!;
 		private ToolStripMenuItem settingsMenuItem = null!;
 		private ToolStripMenuItem scanMenuItem     = null!;
+		private ContextMenuStrip dgvContextMenu = null!;
 
 		#endregion
 	}
